@@ -3,6 +3,7 @@
 ## 1. Introduction
 
 This project implements comprehensive monitoring and drift detection for two AI services:
+
 - **YOLO Object Detection**: Real-time object detection with visual drift monitoring
 - **VQA (BLIP)**: Visual Question Answering with multi-modal drift detection
 
@@ -82,11 +83,11 @@ docker compose up -d
 
 ## 4. Architecture
 
-```
-┌─────────────────────────────────────────────────┐
-│         FastAPI Backend (Port 8000)             │
-├─────────────────────────────────────────────────┤
-│                                                 │
+```plaintext
+┌────────────────────────────────────────────────┐
+│         FastAPI Backend (Port 8000)            │
+├────────────────────────────────────────────────┤
+│                                                │
 │  ┌──────────────┐         ┌──────────────┐     │
 │  │ YOLO Service │         │  VQA Service │     │
 │  │  /v1/yolo/*  │         │  /v1/vqa/*   │     │
@@ -179,12 +180,14 @@ docker compose up -d
 ### YOLO Object Detection
 
 **Detection:**
+
 ```bash
 POST /v1/yolo/detect/
 # Upload image for object detection with drift analysis
 ```
 
 **Monitoring:**
+
 ```bash
 GET /v1/yolo/drift/status        # Current drift status
 GET /v1/yolo/drift/summary       # Detailed drift summary
@@ -197,6 +200,7 @@ GET /v1/yolo/health              # Health check
 ### VQA (Visual Question Answering)
 
 **Question Answering:**
+
 ```bash
 POST /v1/vqa/answer
 # Upload image and question for answer generation
@@ -204,6 +208,7 @@ POST /v1/vqa/answer
 ```
 
 **Monitoring:**
+
 ```bash
 GET /v1/vqa/drift/status         # Current VQA drift status
 GET /v1/vqa/drift/summary        # Detailed VQA drift summary
@@ -292,6 +297,7 @@ curl http://localhost:8000/metrics | grep "vqa_"
 ### Testing Scripts
 
 **1. test_api.py** - YOLO testing client
+
 ```bash
 # Single image detection
 python test_api.py --image path/to/image.jpg
@@ -310,6 +316,7 @@ python test_api.py --reset-reference
 ```
 
 **2. test_vqa_api.py** - VQA testing client
+
 ```bash
 # Single question
 python test_vqa_api.py --image image.jpg --question "What is this?"
@@ -331,6 +338,7 @@ python test_vqa_api.py --drift-status
 ```
 
 **3. test_api.sh** - Bash script for quick tests
+
 ```bash
 chmod +x test_api.sh
 
@@ -340,6 +348,7 @@ chmod +x test_api.sh
 ```
 
 **4. Comprehensive Test Suite**
+
 ```bash
 # Run full test suite for both services
 ./run_comprehensive_tests.sh
@@ -386,6 +395,7 @@ Both dashboards are auto-provisioned when Grafana starts.
 ## 11. Troubleshooting
 
 ### Metrics not appearing
+
 ```bash
 # Check Prometheus targets
 curl http://localhost:9090/api/v1/targets
@@ -401,16 +411,20 @@ curl http://localhost:8000/metrics | grep "vqa_"       # VQA
 ### Drift not detecting
 
 **For YOLO:**
+
 - Need 100+ samples for reference baseline
+
 - Need 50+ additional samples for detection window
 - Check: `curl http://localhost:8000/v1/yolo/drift/summary | jq`
 
 **For VQA:**
+
 - Need 100+ diverse questions for reference
 - Include variety of question types
 - Check: `curl http://localhost:8000/v1/vqa/drift/summary | jq`
 
 ### Service health checks
+
 ```bash
 # Check overall backend health
 curl http://localhost:8000/health | jq
@@ -425,6 +439,7 @@ curl http://localhost:8000/v1/vqa/model/info | jq
 ```
 
 ### Alerts not firing
+
 ```bash
 # Check alert rules loaded
 docker compose -f platform/monitor/docker-compose.yml logs prometheus | grep alert
@@ -437,6 +452,7 @@ curl http://localhost:9093/api/v2/alerts | jq
 ```
 
 ### GPU/Memory Issues
+
 ```bash
 # Check GPU availability
 curl http://localhost:8000/metrics | grep vram
