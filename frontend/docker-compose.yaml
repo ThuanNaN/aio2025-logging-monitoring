@@ -1,0 +1,17 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mlops-frontend
+    restart: on-failure
+    env_file:
+      - .env
+    ports:
+      - 7860:7860
+    networks:
+      - aivn-network
+
+networks:
+  aivn-network:
+    external: true
