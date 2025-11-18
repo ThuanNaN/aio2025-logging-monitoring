@@ -9,14 +9,14 @@
                      │                        │
                      ↓                        ↓
        ┌─────────────────────────┐ ┌─────────────────────────┐
-       │   Frontend (Gradio)  │ │   VQA Client/Test       │
+       │   Frontend (Gradio)     │ │   VQA Client/Test       │
        │   Port: 8501            │ │   Script                │
        └────────────┬────────────┘ └────────────┬────────────┘
                     │                           │
                     ↓ POST /v1/yolo/detect/    ↓ POST /v1/vqa/answer/
-       ┌────────────────────────────────────────────────────────────┐
-       │           ML Backend (FastAPI) - Port: 8000                │
-       │                                                            │
+       ┌──────────────────────────────────────────────────────────┐
+       │           ML Backend (FastAPI) - Port: 8000              │
+       │                                                          │
        │  ┌─────────────────────┐    ┌─────────────────────┐      │
        │  │  YOLO Service       │    │  VQA Service        │      │
        │  │  /v1/yolo/*         │    │  /v1/vqa/*          │      │
@@ -43,7 +43,7 @@
        │              │                   │                       │
        │              │ YOLO + VQA metrics│                       │
        │              └───────────────────┘                       │
-       └────────────────────────┬──────────────────────────────────┘
+       └────────────────────────┬─────────────────────────────────┘
                                 │
                                 ↓ Scrape every 15s
                    ┌─────────────────────────┐
@@ -235,62 +235,62 @@ VQA Inference Request (/v1/vqa/answer)
 ### YOLO Dashboard (10 Panels)
 
 ```plaintext
-┌──────────────────────────────────────────────────────────────────┐
-│                    YOLO ML Model Monitoring                      │
+┌─────────────────────────────────────────────────────────────────┐
+│                    YOLO ML Model Monitoring                     │
 ├──────────────┬──────────────┬──────────────┬────────────────────┤
 │  Dataset     │  Drift Share │  # Drifted   │  Inference Rate    │
 │  Drift       │  (Gauge)     │  Features    │  (Time Series)     │
 │  (Stat)      │              │  (TS)        │                    │
 ├──────────────┴──────────────┴──────────────┴────────────────────┤
-│                                                                  │
+│                                                                 │
 │  Feature-Level Drift Scores (Time Series)                       │
 │  ├─ Brightness Drift                                            │
 │  ├─ Confidence Drift                                            │
 │  └─ Detections Drift                                            │
-│                                                                  │
-├──────────────────────────────┬───────────────────────────────────┤
+│                                                                 │
+├──────────────────────────────┬──────────────────────────────────┤
 │  Inference Latency           │  Image Brightness                │
 │  Percentiles (p50/p95/p99)   │  (Time Series)                   │
 │  (Time Series)               │                                  │
-├──────────────────────────────┼───────────────────────────────────┤
+├──────────────────────────────┼──────────────────────────────────┤
 │  Embedding Drift             │  GPU Memory Usage                │
 │  (Cosine Similarity)         │  (Time Series)                   │
 │  (Time Series)               │                                  │
-├──────────────────────────────┴───────────────────────────────────┤
+├──────────────────────────────┴──────────────────────────────────┤
 │  Active Alerts (Table)                                          │
 │  Alert Name │ Severity │ Component │ Description                │
-└──────────────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### VQA Dashboard (10 Panels)
 
 ```plaintext
-┌──────────────────────────────────────────────────────────────────┐
-│                    VQA ML Model Monitoring                       │
+┌─────────────────────────────────────────────────────────────────┐
+│                    VQA ML Model Monitoring                      │
 ├──────────────┬──────────────┬──────────────┬────────────────────┤
 │  Dataset     │  Drift Share │  # Drifted   │  Inference Rate    │
 │  Drift       │  (Gauge)     │  Features    │  (Time Series)     │
 │  (Stat)      │              │  (TS)        │                    │
 ├──────────────┴──────────────┴──────────────┴────────────────────┤
-│                                                                  │
+│                                                                 │
 │  Feature-Level Drift Scores (Time Series)                       │
 │  ├─ Brightness Drift                                            │
 │  ├─ Answer Length Drift                                         │
 │  ├─ Question Length Drift                                       │
 │  └─ Question Type Drift                                         │
-│                                                                  │
-├──────────────────────────────┬───────────────────────────────────┤
+│                                                                 │
+├──────────────────────────────┬──────────────────────────────────┤
 │  Inference Latency           │  Image Brightness                │
 │  Percentiles (p50/p95/p99)   │  (Time Series)                   │
 │  (Time Series)               │                                  │
-├──────────────────────────────┼───────────────────────────────────┤
+├──────────────────────────────┼──────────────────────────────────┤
 │  Question Type Distribution  │  Answer Length Distribution      │
 │  (Pie Chart)                 │  (Histogram)                     │
 │                              │                                  │
-├──────────────────────────────┴───────────────────────────────────┤
+├──────────────────────────────┴──────────────────────────────────┤
 │  Active Alerts (Table)                                          │
 │  Alert Name │ Severity │ Component │ Description                │
-└──────────────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ## Data Flow Timeline
@@ -403,50 +403,53 @@ t=1300s  │ Drift score normalizes
 ## Network Topology
 
 ```plaintext
-┌─────────────────────────────────────────────────────────┐
-│                   aivn-network (Docker)                 │
-│                                                         │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐        │
-│  │ Backend  │◄───┤Prometheus│◄───┤ Grafana  │        │
-│  │  :8000   │    │  :9090   │    │  :3000   │        │
-│  │          │    └────┬─────┘    └──────────┘        │
+┌────────────────────────────────────────────────────────┐
+│                   aivn-network (Docker)                │
+│                                                        │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐          │
+│  │ Backend  │◄───┤Prometheus│◄───┤ Grafana  │          │
+│  │  :8000   │    │  :9090   │    │  :3000   │          │
+│  │          │    └────┬─────┘    └──────────┘          │
 │  │ YOLO API │         │                                │
 │  │ VQA API  │         ├────► Alertmanager :9093        │
 │  │ Metrics  │         │                                │
 │  └─────┬────┘         │                                │
 │        │              │                                │
 │        └──────────────┴────► Loki :3100                │
-│                                                         │
+│                                                        │
 │  All containers can communicate via service names      │
 │  (e.g., http://prometheus:9090)                        │
-└─────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────┘
          │
          ↓ Exposed ports
 ┌─────────────────────────────────────────────────────────┐
 │                    Host Machine                         │
-│  localhost:3000  → Grafana (YOLO + VQA dashboards)     │
-│  localhost:9090  → Prometheus                          │
-│  localhost:9093  → Alertmanager                        │
-│  localhost:8000  → Backend API (/v1/yolo, /v1/vqa)    │
-│  localhost:8501  → Frontend (YOLO Gradio)           │
+│  localhost:3000  → Grafana (YOLO + VQA dashboards)      │
+│  localhost:9090  → Prometheus                           │
+│  localhost:9093  → Alertmanager                         │
+│  localhost:8000  → Backend API (/v1/yolo, /v1/vqa)      │
+│  localhost:8501  → Frontend (YOLO Gradio)               │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ## Service Endpoint Summary
 
 ### YOLO Endpoints
+
 - `POST /v1/yolo/detect` - Object detection
 - `GET /v1/yolo/drift/status` - Drift status
 - `POST /v1/yolo/drift/reset-reference` - Reset baseline
 - `GET /v1/yolo/model/info` - Model information
 
 ### VQA Endpoints
+
 - `POST /v1/vqa/answer` - Visual question answering
 - `GET /v1/vqa/drift/status` - Drift status
 - `POST /v1/vqa/drift/reset-reference` - Reset baseline
 - `GET /v1/vqa/model/info` - Model information
 
 ### Common Endpoints
+
 - `GET /metrics` - Prometheus metrics (both services)
 - `GET /health` - Health check
 - `GET /` - API documentation

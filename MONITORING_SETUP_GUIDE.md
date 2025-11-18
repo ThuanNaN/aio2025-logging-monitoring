@@ -4,11 +4,11 @@ This guide walks you through setting up complete monitoring, visualization, and 
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────────────────────────────────┐
-│      FastAPI Backend (Port 8000)            │
-├─────────────────────────────────────────────┤
-│                                             │
+```plaintext
+┌────────────────────────────────────────────┐
+│      FastAPI Backend (Port 8000)           │
+├────────────────────────────────────────────┤
+│                                            │
 │  ┌──────────────┐    ┌──────────────┐      │
 │  │ YOLO Service │    │  VQA Service │      │
 │  │  /v1/yolo/*  │    │  /v1/vqa/*   │      │
@@ -73,6 +73,7 @@ docker compose up -d --build
 ```
 
 This will:
+
 - Build the FastAPI backend with both YOLO and VQA services
 - Integrate Evidently drift detection for both models
 - Expose metrics at `http://localhost:8000/metrics`
@@ -89,6 +90,7 @@ docker compose up -d --build
 ```
 
 This will start:
+
 - **Prometheus** (port 9090): Metrics collection and alerting
 - **Alertmanager** (port 9093): Alert routing and notification
 - **Grafana** (port 3000): Visualization dashboards
@@ -114,6 +116,7 @@ Both dashboards are automatically loaded when Grafana starts. Navigate to:
 ### Option 2: Manual Import
 
 **For YOLO:**
+
 1. Login to Grafana (http://localhost:3000)
 2. Click **+** → **Import Dashboard**
 3. Upload `platform/monitor/grafana/yolo-evidently-dashboard.json`
@@ -121,6 +124,7 @@ Both dashboards are automatically loaded when Grafana starts. Navigate to:
 5. Click **Import**
 
 **For VQA:**
+
 1. Click **+** → **Import Dashboard**
 2. Upload `platform/monitor/grafana/vqa-evidently-dashboard.json`
 3. Select **Prometheus** as the datasource
@@ -131,23 +135,28 @@ Both dashboards are automatically loaded when Grafana starts. Navigate to:
 ### YOLO Dashboard (10 Panels)
 
 #### 1. **Dataset Drift Status** (Stat)
+
 - Shows binary drift detection (Green = No Drift, Red = Drift Detected)
 - Metric: `evidently_dataset_drift`
 
 #### 2. **Drift Share** (Gauge)
+
 - Percentage of features showing drift
 - Metric: `evidently_drift_share`
 - Thresholds: Green (0-30%), Yellow (30-50%), Red (>50%)
 
 #### 3. **Number of Drifted Features** (Time Series)
+
 - Count of features currently drifting
 - Metric: `evidently_num_drifted_features`
 
 #### 4. **Inference Rate** (Time Series)
+
 - Requests per second
 - Metric: `rate(inference_count_total[1m])`
 
 #### 5. **Feature-Level Drift Scores** (Time Series)
+
 - Individual drift scores for:
   - Brightness: `evidently_brightness_drift_score`
   - Confidence: `evidently_confidence_drift_score`
@@ -155,67 +164,82 @@ Both dashboards are automatically loaded when Grafana starts. Navigate to:
 - Thresholds: Yellow (0.5), Red (0.7)
 
 #### 6. **Inference Latency Percentiles** (Time Series)
+
 - p50, p95, p99 latency
 - Helps identify performance degradation
 
 #### 7. **Image Brightness** (Time Series)
+
 - Raw brightness values over time
 - Metric: `drift_image_brightness`
 
 #### 8. **Embedding Drift** (Time Series)
+
 - Cosine similarity-based drift
 - Metric: `drift_embedding_distance`
 
 #### 9. **GPU Memory Usage** (Time Series)
+
 - VRAM consumption in GB
 - Metric: `process_vram_memory_GB`
 
 #### 10. **Active Alerts** (Table)
+
 - Real-time view of firing alerts
 - Shows alert name, severity, component
 
 ### VQA Dashboard (10 Panels)
 
 #### 1. **VQA Dataset Drift Status** (Stat)
+
 - Binary drift indicator for VQA
 - Metric: `vqa_evidently_dataset_drift`
 
 #### 2. **VQA Drift Share** (Gauge)
+
 - Percentage of VQA features showing drift
 - Metric: `vqa_evidently_drift_share`
 - Thresholds: Green (0-30%), Yellow (30-50%), Red (>50%)
 
 #### 3. **VQA Drifted Features Count** (Time Series)
+
 - Number of drifted VQA features
 - Metric: `vqa_evidently_num_drifted_features`
 
 #### 4. **VQA Inference Rate** (Time Series)
+
 - VQA requests per second
 - Metric: `rate(vqa_inference_count_total[1m])`
 
 #### 5. **VQA Feature-Level Drift Scores** (Time Series)
+
 - Brightness: `vqa_evidently_brightness_drift_score`
 - Question Length: `vqa_evidently_question_length_drift_score`
 - Answer Length: `vqa_evidently_answer_length_drift_score`
 - Inference Time: `vqa_evidently_inference_time_drift_score`
 
 #### 6. **VQA Inference Latency** (Time Series)
+
 - p50, p95, p99 latency for VQA
 - Metric: `vqa_inference_latency_seconds`
 
 #### 7. **Question Type Distribution** (Bar Chart/Time Series)
+
 - Distribution of question types (what, where, who, how_many, etc.)
 - Metric: `vqa_question_type_total`
 
 #### 8. **Question Length Trend** (Time Series)
+
 - Average question length over time
 - Metric: `vqa_question_length`
 
 #### 9. **Answer Length Trend** (Time Series)
+
 - Average answer length over time
 - Metric: `vqa_answer_length`
 
 #### 10. **VQA Active Alerts** (Table)
+
 - Real-time VQA-specific alerts
 - Shows alert name, severity, component
 
@@ -266,6 +290,7 @@ Both dashboards are automatically loaded when Grafana starts. Navigate to:
 Edit `platform/monitor/alertmanager/alertmanager.yml` to add your notification channels:
 
 **Slack Example:**
+
 ```yaml
 receivers:
   - name: 'drift-alerts'
@@ -277,6 +302,7 @@ receivers:
 ```
 
 **Email Example:**
+
 ```yaml
 receivers:
   - name: 'critical-alerts'
@@ -289,6 +315,7 @@ receivers:
 ```
 
 **PagerDuty Example:**
+
 ```yaml
 receivers:
   - name: 'critical-alerts'
@@ -297,6 +324,7 @@ receivers:
 ```
 
 After updating, restart Alertmanager:
+
 ```bash
 docker compose restart alertmanager
 ```
@@ -347,6 +375,7 @@ done
 2. Query examples:
 
 **YOLO Metrics:**
+
 ```promql
 evidently_dataset_drift
 evidently_drift_share
@@ -355,6 +384,7 @@ evidently_brightness_drift_score
 ```
 
 **VQA Metrics:**
+
 ```promql
 vqa_evidently_dataset_drift
 vqa_evidently_drift_share
@@ -373,6 +403,7 @@ vqa_evidently_question_length_drift_score
 ### 4. Check Drift Status via API
 
 **YOLO Drift Status:**
+
 ```bash
 # Get YOLO drift status
 curl http://localhost:8000/v1/yolo/drift/status | jq
@@ -385,6 +416,7 @@ curl http://localhost:8000/v1/yolo/data-quality | jq
 ```
 
 **VQA Drift Status:**
+
 ```bash
 # Get VQA drift status
 curl http://localhost:8000/v1/vqa/drift/status | jq
@@ -400,6 +432,7 @@ curl http://localhost:8000/v1/vqa/data-quality | jq
 
 **For YOLO:**
 Send images with significantly different characteristics:
+
 ```bash
 # Send very dark images (low brightness)
 # Send very bright images (high brightness)
@@ -409,6 +442,7 @@ Send images with significantly different characteristics:
 
 **For VQA:**
 Send different types of questions and images:
+
 ```bash
 # Different question types: what, where, who, how many
 # Different question lengths (short vs long questions)
@@ -447,6 +481,7 @@ curl http://localhost:8000/v1/vqa/model/info | jq
 ### 1. **Establish Baseline**
 
 **For Both YOLO and VQA:**
+
 - Collect 100+ samples before drift detection activates
 - Use representative production data from typical use cases
 - Document normal ranges for all monitored features:
@@ -454,11 +489,13 @@ curl http://localhost:8000/v1/vqa/model/info | jq
   - **VQA**: brightness, question length, answer length, inference time
 
 **VQA Specific:**
+
 - Ensure diverse question types in baseline (what, where, who, how_many, etc.)
 - Include variety of image types and complexities
 - Document typical answer lengths for different question types
 
 ### 2. **Set Alert Thresholds**
+
 - Start conservative, adjust based on false positive rate
 - Critical alerts should require immediate action
 - Warning alerts should trigger investigation
@@ -467,6 +504,7 @@ curl http://localhost:8000/v1/vqa/model/info | jq
   - **VQA**: Monitor question patterns and answer quality drift
 
 ### 3. **Regular Reviews**
+
 - Review drift trends weekly for both services
 - Investigate persistent warnings
 - Update reference data after valid distribution changes
@@ -475,6 +513,7 @@ curl http://localhost:8000/v1/vqa/model/info | jq
 ### 4. **Response Procedures**
 
 **When YOLO Drift Alert Fires:**
+
 1. Check dashboard for affected features (brightness, confidence, detections)
 2. Review recent data changes:
    - New camera or lighting conditions
@@ -484,6 +523,7 @@ curl http://localhost:8000/v1/vqa/model/info | jq
 4. Decide: retrain model OR update reference data
 
 **When VQA Drift Alert Fires:**
+
 1. Check affected features (question patterns, answer lengths, visual features)
 2. Review recent changes:
    - New question types or patterns
@@ -495,12 +535,14 @@ curl http://localhost:8000/v1/vqa/model/info | jq
 5. Decide: retrain/fine-tune model OR update reference data
 
 **When Performance Alert Fires:**
+
 1. Check GPU memory and system resources
 2. Review inference latency trends
 3. Look for unusual request patterns
 4. Scale infrastructure if needed
 
 ### 5. **Dashboard Customization**
+
 - Add custom panels for your specific metrics
 - Set up dashboard variables for filtering
 - Create separate dashboards for different time ranges
@@ -511,20 +553,25 @@ curl http://localhost:8000/v1/vqa/model/info | jq
 ### Metrics Not Showing in Grafana
 
 **Check Prometheus is scraping:**
+
 ```bash
 curl http://localhost:9090/api/v1/targets
 ```
+
 Look for `yolo_backend` job with state "UP"
 
 **Check backend metrics endpoint:**
+
 ```bash
 curl http://localhost:8000/metrics
 ```
+
 Should return Prometheus format metrics
 
 ### Alerts Not Firing
 
 **Verify alert rules loaded:**
+
 ```bash
 docker compose logs prometheus | grep "alert_rules.yml"
 ```
@@ -535,6 +582,7 @@ http://localhost:9090/alerts
 ### Dashboard Not Loading
 
 **Check Grafana logs:**
+
 ```bash
 docker compose logs grafana
 ```
@@ -545,10 +593,12 @@ Grafana → Configuration → Data Sources → Prometheus → Test
 ### No Drift Detection Results
 
 **Need more data:**
+
 - Send 100+ requests to establish reference for each service
 - Send 50+ more requests to trigger detection
 
 **Check detector status:**
+
 ```bash
 # YOLO detector
 curl http://localhost:8000/v1/yolo/drift/summary | jq
@@ -558,6 +608,7 @@ curl http://localhost:8000/v1/vqa/drift/summary | jq
 ```
 
 **Verify data collection:**
+
 ```bash
 # Check if samples are being added
 curl http://localhost:8000/v1/yolo/drift/status | jq '.reference_samples, .current_samples'
@@ -567,11 +618,13 @@ curl http://localhost:8000/v1/vqa/drift/status | jq '.reference_samples, .curren
 ### VQA-Specific Issues
 
 **Question type not detected:**
+
 - Check if question follows expected patterns
 - Review question type classification logic
 - Verify question preprocessing
 
 **High inference time drift:**
+
 - Check GPU memory usage
 - Review batch processing if applicable
 - Verify BLIP model is loaded correctly
@@ -581,7 +634,9 @@ curl http://localhost:8000/v1/vqa/drift/status | jq '.reference_samples, .curren
 ### Update Alert Rules
 
 1. Edit `platform/monitor/prometheus/alert_rules.yml`
+
 2. Reload Prometheus config:
+
 ```bash
 curl -X POST http://localhost:9090/-/reload
 ```
