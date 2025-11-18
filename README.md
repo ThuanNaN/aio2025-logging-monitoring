@@ -15,7 +15,7 @@ This project implements comprehensive monitoring and drift detection for two AI 
 - **Alertmanager**: Alert routing and notifications
 - **Loki**: Log aggregation
 - **FastAPI**: Backend API server
-- **Streamlit**: Frontend UI (optional)
+- **Gradio**: Frontend UI (optional)
 
 ## 2. Features
 

@@ -9,7 +9,7 @@
                      │                        │
                      ↓                        ↓
        ┌─────────────────────────┐ ┌─────────────────────────┐
-       │   Frontend (Streamlit)  │ │   VQA Client/Test       │
+       │   Frontend (Gradio)  │ │   VQA Client/Test       │
        │   Port: 8501            │ │   Script                │
        └────────────┬────────────┘ └────────────┬────────────┘
                     │                           │
@@ -394,7 +394,7 @@ t=1300s  │ Drift score normalizes
 | Service | Port | Protocol | Purpose |
 |---------|------|----------|---------|
 | Backend | 8000 | HTTP | YOLO + VQA API & Metrics |
-| Frontend | 8501 | HTTP | Streamlit UI (YOLO) |
+| Frontend | 8501 | HTTP | Gradio UI (YOLO) |
 | Prometheus | 9090 | HTTP | Metrics & Queries |
 | Alertmanager | 9093 | HTTP | Alert Management |
 | Grafana | 3000 | HTTP | Dashboards (YOLO + VQA) |
@@ -428,7 +428,7 @@ t=1300s  │ Drift score normalizes
 │  localhost:9090  → Prometheus                          │
 │  localhost:9093  → Alertmanager                        │
 │  localhost:8000  → Backend API (/v1/yolo, /v1/vqa)    │
-│  localhost:8501  → Frontend (YOLO Streamlit)           │
+│  localhost:8501  → Frontend (YOLO Gradio)           │
 └─────────────────────────────────────────────────────────┘
 ```
 
