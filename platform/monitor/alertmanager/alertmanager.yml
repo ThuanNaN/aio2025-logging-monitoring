@@ -26,21 +26,57 @@ receivers:
     webhook_configs:
       - url: 'http://localhost:5001/webhook'
         send_resolved: true
-  
+    telegram_configs:
+      - bot_token: '8343051637:AAFWLHS95iZCqM3-XhcAypcz6uzq9IHpaQ8' 
+        chat_id: 5203060870     
+        send_resolved: true
+        parse_mode: 'HTML'
+        message: |
+          <b>Alert:</b> {{ .GroupLabels.alertname }}
+          <b>Severity:</b> {{ .GroupLabels.severity }}
+          <b>Description:</b> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}
+
   - name: 'critical-alerts'
     webhook_configs:
       - url: 'http://localhost:5001/webhook/critical'
         send_resolved: true
-  
+    telegram_configs:
+      - bot_token: '8343051637:AAFWLHS95iZCqM3-XhcAypcz6uzq9IHpaQ8'
+        chat_id: 5203060870
+        send_resolved: true
+        parse_mode: 'HTML'
+        message: |
+          🚨 <b>CRITICAL ALERT</b> 🚨
+          <b>Alert:</b> {{ .GroupLabels.alertname }}
+          <b>Description:</b> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}
+
   - name: 'warning-alerts'
     webhook_configs:
       - url: 'http://localhost:5001/webhook/warning'
         send_resolved: true
-  
+    telegram_configs:
+      - bot_token: '8343051637:AAFWLHS95iZCqM3-XhcAypcz6uzq9IHpaQ8'
+        chat_id: 5203060870
+        send_resolved: true
+        parse_mode: 'HTML'
+        message: |
+          ⚠️ <b>Warning Alert</b>
+          <b>Alert:</b> {{ .GroupLabels.alertname }}
+          <b>Description:</b> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}
+
   - name: 'drift-alerts'
     webhook_configs:
       - url: 'http://localhost:5001/webhook/drift'
         send_resolved: true
+    telegram_configs:
+      - bot_token: '8343051637:AAFWLHS95iZCqM3-XhcAypcz6uzq9IHpaQ8'
+        chat_id: 5203060870
+        send_resolved: true
+        parse_mode: 'HTML'
+        message: |
+          📊 <b>Drift Alert</b>
+          <b>Alert:</b> {{ .GroupLabels.alertname }}
+          <b>Description:</b> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}
 
 inhibit_rules:
   - source_match:
