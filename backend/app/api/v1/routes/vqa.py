@@ -7,7 +7,6 @@ from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from PIL import Image
 import io
-from typing import Optional
 
 from app.api.v1.controller.blip import get_blip_controller
 from app.api.v1.detector.evidently_vqa_drift import get_vqa_drift_detector
