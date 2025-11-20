@@ -890,7 +890,7 @@
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["ml", "drift", "evidently", "yolo"],
+  "tags": ["ml-monitoring", "drift", "evidently", "yolo"],
   "templating": {
     "list": []
   },
@@ -900,7 +900,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "YOLO ML Model Monitoring with Evidently",
+  "title": "YOLO ML Model Monitoring",
   "uid": "yolo-evidently-monitoring",
   "version": 0,
   "weekStart": ""
