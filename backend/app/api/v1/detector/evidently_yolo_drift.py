@@ -1,5 +1,5 @@
 """
-Evidently-based drift detection for image data and model predictions
+Evidently-based drift detector for YOLO model monitoring
 """
 import pandas as pd
 import numpy as np
@@ -9,9 +9,9 @@ from evidently import Report
 from evidently.presets import DataDriftPreset
 
 
-class EvidentlyDriftDetector:
+class EvidentlyYOLODriftDetector:
     """
-    Drift detector using Evidently library for monitoring image features and predictions
+    Drift detector for YOLO model using Evidently
     """
     
     def __init__(
@@ -138,7 +138,7 @@ class EvidentlyDriftDetector:
             )
             
             # Extract results
-            report_dict = drift_report.as_dict()
+            report_dict = drift_report.dict()
             metrics = report_dict.get('metrics', [])
             
             # Get dataset drift metric
@@ -312,9 +312,9 @@ class EvidentlyDriftDetector:
 drift_detector = None
 
 
-def get_drift_detector() -> EvidentlyDriftDetector:
+def get_yolo_drift_detector() -> EvidentlyYOLODriftDetector:
     """Get or create drift detector instance"""
     global drift_detector
     if drift_detector is None:
-        drift_detector = EvidentlyDriftDetector()
+        drift_detector = EvidentlyYOLODriftDetector()
     return drift_detector

@@ -7,12 +7,11 @@ from fastapi import FastAPI, APIRouter, File, UploadFile, HTTPException
 from ultralytics import YOLO
 from fastapi.responses import JSONResponse
 from PIL import Image
-import numpy as np
 import torch
 from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
-from app.api.v1.controller.yolo import yolo_prediction
-from app.api.v1.detector.evidently_drift import get_drift_detector
+from app.api.v1.controller.yolo import get_yolo_controller
+from backend.app.api.v1.detector.evidently_yolo_drift import get_yolo_drift_detector
 from app.api.v1.routes.metrics import (
     image_brightness_metric, 
     brightness_histogram,
@@ -40,9 +39,12 @@ os.makedirs(ANNOTATED_DIR, exist_ok=True)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# Initialize controller and drift detector
+yolo_controller = get_yolo_controller()
+evidently_detector = get_yolo_drift_detector()
+
 # Global variable for drift detection
 reference_embedding = None
-evidently_detector = get_drift_detector()
 
 
 def load_model(model_path: str) -> YOLO:
@@ -60,7 +62,10 @@ models = {}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     model_path = LOCAL_ARTIFACTS / "yolo" / "yolo11x.pt"
-    models["yolo"] = load_model(model_path)
+    model = load_model(model_path)
+    models["yolo"] = model
+    # Set the model in the controller
+    yolo_controller.set_model(model)
     yield
     models.clear()
 
@@ -98,52 +103,25 @@ async def detect_objects(file: UploadFile = File(...)):
             f.write(contents)
         
         # Open image for detection
-        image = Image.open(io.BytesIO(contents))
-
-        grayscale_image = image.convert("L")
-        image_array = np.asarray(grayscale_image)
-        brightness = image_array.mean()
-
-        # Compute brightness drift
-        DRIFT_BRIGHTNESS.set(brightness)
-
-        vram_memory_allocated = torch.cuda.memory_allocated(0) / 1e9
-
-        gpu_allocated_metric.set(vram_memory_allocated)
+        pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
+        
+        # Get detection results from YOLO controller
+        result = yolo_controller.detect_objects(
+            image=pil_image,
+            annotated_filepath=annotated_filepath
+        )
+        
+        # Extract features
+        features = result['features']
+        brightness = features['brightness']
+        avg_confidence = result['avg_confidence']
+        embedding = features['embedding_features']
+        
+        # Update basic metrics
+        gpu_allocated_metric.set(features['vram_allocated'])
         image_brightness_metric.set(brightness)
         brightness_histogram.observe(brightness)
-        
-        # Perform object detection and get raw results
-        model = models["yolo"]
-        results = model(image)
-        
-        # Save annotated image
-        results[0].save(annotated_filepath)
-        
-        # Extract embeddings from YOLO model (using feature extraction)
-        # Get the last feature map before detection head
-        with torch.no_grad():
-            # Process image for embedding extraction
-            img_tensor = results[0].orig_img
-            img_rgb = Image.fromarray(img_tensor[..., ::-1])  # Convert BGR to RGB
-            
-            # Re-run inference to get features
-            model_results = model(img_rgb, verbose=False)
-            
-            # Try to extract embeddings from the model's feature extractor
-            # This is a simplified approach - adjust based on YOLO version
-            if hasattr(model_results[0], 'boxes') and len(model_results[0].boxes) > 0:
-                # Use detection features as proxy for embeddings
-                boxes_data = model_results[0].boxes.data
-                if len(boxes_data) > 0:
-                    # Average box features as embedding
-                    embedding = boxes_data[:, :4].mean(dim=0).unsqueeze(0).cpu().numpy()
-                else:
-                    # Default embedding if no detections
-                    embedding = np.array([[brightness, brightness, brightness, brightness]])
-            else:
-                # Default embedding if no detections
-                embedding = np.array([[brightness, brightness, brightness, brightness]])
+        DRIFT_BRIGHTNESS.set(brightness)
         
         # Set baseline embedding on first run
         if reference_embedding is None:
@@ -153,42 +131,16 @@ async def detect_objects(file: UploadFile = File(...)):
         drift_score = 1 - cosine_similarity(reference_embedding, embedding)[0][0]
         DRIFT_EMBEDDING_DISTANCE.set(drift_score)
         
-        # Process detections for response
-        detections = []
-        total_confidence = 0.0
-        for result in results:
-            boxes = result.boxes
-            for box in boxes:
-                cls = int(box.cls[0])
-                conf = float(box.conf[0])
-                total_confidence += conf
-                bbox = box.xyxy[0].tolist()
-                
-                detections.append({
-                    'class': model.names[cls],
-                    'confidence': conf,
-                    'bounding_box': {
-                        'x1': bbox[0],
-                        'y1': bbox[1],
-                        'x2': bbox[2],
-                        'y3': bbox[3]
-                    }
-                })
-        
-        # Calculate average confidence
-        avg_confidence = total_confidence / len(detections) if len(detections) > 0 else 0.0
-        
         # Add sample to Evidently detector
         evidently_detector.add_sample(
-            brightness=float(brightness),
-            num_detections=len(detections),
+            brightness=brightness,
+            num_detections=features['num_detections'],
             avg_confidence=avg_confidence,
             embedding_features=embedding
         )
         
         # Detect drift using Evidently
         drift_result = evidently_detector.detect_drift()
-        evidently_drift_info = {}
         
         # Update Prometheus metrics with Evidently results if drift was analyzed
         if drift_result.get('drift_share') is not None:
@@ -204,21 +156,23 @@ async def detect_objects(file: UploadFile = File(...)):
                 EVIDENTLY_CONFIDENCE_DRIFT_SCORE.set(feature_scores['avg_confidence'].get('drift_score', 0.0))
             if 'num_detections' in feature_scores:
                 EVIDENTLY_DETECTIONS_DRIFT_SCORE.set(feature_scores['num_detections'].get('drift_score', 0.0))
-            
-            evidently_drift_info = drift_result
         
         # Record inference latency
         INFERENCE_LATENCY.observe(time.time() - start)
         
-        return JSONResponse(content={
-            'detections': detections,
-            'total_objects': len(detections),
-            'device': str(DEVICE),
-            'brightness': float(brightness),
+        # Prepare response
+        response = {
+            'detections': result['detections'],
+            'total_objects': result['total_objects'],
+            'device': result['device'],
+            'inference_time': result['inference_time'],
+            'brightness': brightness,
             'embedding_drift': float(drift_score),
-            'avg_confidence': float(avg_confidence),
-            'evidently_drift': evidently_drift_info,
-        })
+            'avg_confidence': avg_confidence,
+            'evidently_drift': drift_result
+        }
+        
+        return JSONResponse(content=response)
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Detection error: {str(e)}")
@@ -306,18 +260,7 @@ async def get_model_info():
         JSON response with model details
     """
     try:
-        model = models.get("yolo")
-        if model is None:
-            raise HTTPException(status_code=500, detail="Model not loaded")
-        
-        model_info = {
-            "model_name": model.model.yaml.get("model", "YOLO"),
-            "model_version": model.model.yaml.get("version", "unknown"),
-            "num_classes": model.model.yaml.get("nc", None),
-            "class_names": model.names,
-            "device": str(next(model.model.parameters()).device)
-        }
-        
+        model_info = yolo_controller.get_model_info()
         return JSONResponse(content=model_info)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting model info: {str(e)}")
@@ -326,9 +269,31 @@ async def get_model_info():
 @router.get("/health")
 async def health_check():
     """
-    Health check endpoint to verify service is running
+    Health check endpoint for YOLO service
     
     Returns:
-        JSON response indicating service status
+        JSON response with service health status
     """
-    return JSONResponse(content={"status": "ok"})
+    try:
+        model_info = yolo_controller.get_model_info()
+        detector_stats = evidently_detector.get_stats()
+        
+        return JSONResponse(content={
+            "status": "healthy",
+            "service": "yolo",
+            "model": model_info,
+            "drift_detector": {
+                "reference_samples": detector_stats['reference_size'],
+                "current_samples": detector_stats['current_size'],
+                "drift_detected": detector_stats['drift_detected']
+            }
+        })
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "service": "yolo",
+                "error": str(e)
+            }
+        )

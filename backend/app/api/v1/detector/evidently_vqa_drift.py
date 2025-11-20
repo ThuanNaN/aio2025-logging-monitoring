@@ -124,7 +124,7 @@ class EvidentlyVQADriftDetector:
             )
             
             # Extract results
-            report_dict = drift_report.as_dict()
+            report_dict = drift_report.dict()
             metrics = report_dict.get('metrics', [])
             
             # Get dataset drift metric
