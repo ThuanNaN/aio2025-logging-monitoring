@@ -11,7 +11,7 @@ import torch
 from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
 from app.api.v1.controller.yolo import get_yolo_controller
-from backend.app.api.v1.detector.evidently_yolo_drift import get_yolo_drift_detector
+from app.api.v1.detector.evidently_yolo_drift import get_yolo_drift_detector
 from app.api.v1.routes.metrics import (
     image_brightness_metric, 
     brightness_histogram,
