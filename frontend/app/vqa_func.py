@@ -1,4 +1,3 @@
-import gradio as gr
 import requests
 from PIL import Image
 import numpy as np
