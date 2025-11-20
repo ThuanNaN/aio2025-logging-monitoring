@@ -20,7 +20,7 @@ services:
       options:
         loki-url: "http://loki:3100/loki/api/v1/push"
         loki-retries: 5
-        loki-batch-size: 400
+        loki-batch-size: 50
         labels: "service,container_name"
     ports:
       - 8000:8000
