@@ -1,6 +1,7 @@
 """
 Evidently-based drift detector for YOLO model monitoring
 """
+import json
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Any
@@ -132,13 +133,13 @@ class EvidentlyYOLODriftDetector:
                 DataDriftPreset(),
             ])
             
-            drift_report.run(
+            snapshot = drift_report.run(
                 reference_data=reference_df,
                 current_data=current_df
             )
             
             # Extract results
-            report_dict = drift_report.dict()
+            report_dict = json.loads(snapshot.json())
             metrics = report_dict.get('metrics', [])
             
             # Get dataset drift metric

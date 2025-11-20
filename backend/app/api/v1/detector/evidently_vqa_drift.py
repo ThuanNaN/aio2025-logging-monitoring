@@ -3,6 +3,7 @@ Evidently Drift Detector for VQA (Visual Question Answering)
 Monitors drift in visual features, question patterns, and answer distributions
 """
 
+from flask import json
 import pandas as pd
 from typing import Dict, Any, Optional, List
 from datetime import datetime
@@ -118,13 +119,13 @@ class EvidentlyVQADriftDetector:
                 DataDriftPreset(),
             ])
             
-            drift_report.run(
+            snapshot = drift_report.run(
                 reference_data=reference_df,
                 current_data=current_df
             )
             
             # Extract results
-            report_dict = drift_report.dict()
+            report_dict = json.loads(snapshot.json())
             metrics = report_dict.get('metrics', [])
             
             # Get dataset drift metric
