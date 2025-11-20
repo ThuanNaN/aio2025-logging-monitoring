@@ -20,12 +20,12 @@ scrape_configs:
 
   - job_name: "loki"
     static_configs:
-      - targets: ["localhost:3100"]
+      - targets: ["loki:3100"]
 
   - job_name: "mlops_backend"
     metrics_path: "/metrics"
     static_configs:
-      - targets: ["localhost:8000"]
+      - targets: ["mlops-backend:8000"]
     scrape_interval: 5s
     scrape_timeout: 4s
     metric_relabel_configs:
