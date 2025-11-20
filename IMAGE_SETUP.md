@@ -16,7 +16,7 @@ This guide explains how to organize images to effectively test drift detection f
 
 Create the following directory structure for organized drift testing:
 
-```
+```plaintext
 test_images/
 ├── baseline/                    # Reference/baseline images
 │   ├── yolo/
@@ -69,6 +69,7 @@ test_images/
 **Purpose:** Establish the reference distribution
 
 **Characteristics:**
+
 - Diverse but representative of normal operation
 - Balanced brightness (80-180)
 - Mix of indoor/outdoor scenes
@@ -77,7 +78,8 @@ test_images/
 - Standard resolution (640x480 to 1920x1080)
 
 **YOLO Baseline:**
-```
+
+```plaintext
 - Street scenes with cars, pedestrians, traffic signs
 - Indoor scenes with furniture, people, electronics
 - Outdoor scenes with nature, buildings, animals
@@ -86,7 +88,8 @@ test_images/
 ```
 
 **VQA Baseline:**
-```
+
+```plaintext
 - Everyday scenes (living rooms, kitchens, streets)
 - People performing common actions
 - Common objects in typical contexts
@@ -99,22 +102,26 @@ test_images/
 **Purpose:** Test specific drift detection scenarios
 
 #### Brightness Drift
+
 - **Dark images:** brightness < 50 (night scenes, poorly lit interiors)
 - **Bright images:** brightness > 220 (overexposed, snow scenes, white backgrounds)
 - **High contrast:** Mix of very dark and very bright regions
 
 #### Object Density Drift (YOLO)
+
 - **Few objects:** 0-2 objects (minimalist scenes, single subject portraits)
 - **Many objects:** 10-20 objects (crowded markets, shelves, traffic)
 - **Extreme density:** 20+ objects (stadium crowds, dense forests)
 
 #### Confidence Drift (YOLO)
+
 - **Low quality:** Blurry, pixelated, low resolution
 - **Occlusion:** Partially hidden objects
 - **Unusual angles:** Bird's eye view, extreme perspectives
 - **Poor lighting:** Shadows, backlighting
 
 #### Question Pattern Drift (VQA)
+
 - Images requiring specific question types:
   - **Counting:** Multiple similar objects ("How many cars?")
   - **Location:** Objects in specific positions ("Where is the cat?")
@@ -122,6 +129,7 @@ test_images/
   - **Description:** Complex scenes ("What is happening?")
 
 #### Domain Drift
+
 - **New visual domains:** Medical images, aerial photos, technical drawings
 - **Different art styles:** Cartoons, paintings, sketches
 - **Unusual contexts:** Underwater, space, microscopic
@@ -141,6 +149,7 @@ mkdir -p test_images/baseline/yolo/{normal,indoor,outdoor}
 ```
 
 **Baseline Criteria:**
+
 - Brightness: 80-180 (mean pixel value)
 - Object count: 2-8 objects per image
 - Confidence: 0.5-0.9 average
@@ -149,6 +158,7 @@ mkdir -p test_images/baseline/yolo/{normal,indoor,outdoor}
 ### Step 2: Prepare Drift Test Sets (50 images each)
 
 **Brightness Drift Test:**
+
 ```bash
 mkdir -p test_images/drift_scenarios/yolo/brightness/{dark,bright,high_contrast}
 
@@ -169,6 +179,7 @@ mkdir -p test_images/drift_scenarios/yolo/brightness/{dark,bright,high_contrast}
 ```
 
 **Object Density Drift Test:**
+
 ```bash
 mkdir -p test_images/drift_scenarios/yolo/object_density/{few_objects,many_objects,crowded}
 
@@ -189,6 +200,7 @@ mkdir -p test_images/drift_scenarios/yolo/object_density/{few_objects,many_objec
 ```
 
 **Confidence Drift Test:**
+
 ```bash
 mkdir -p test_images/drift_scenarios/yolo/confidence/{low_quality,occluded,unusual_angles}
 
@@ -260,6 +272,7 @@ mkdir -p test_images/baseline/vqa/{general,people,objects}
 ```
 
 **Baseline Criteria:**
+
 - Brightness: 80-180 (mean pixel value)
 - Variety: Different subjects, contexts, compositions
 - Question-friendly: Clear subjects that can answer "what, where, who, how many"
@@ -268,6 +281,7 @@ mkdir -p test_images/baseline/vqa/{general,people,objects}
 ### Step 2: Prepare VQA-Specific Drift Sets
 
 **Visual Feature Drift:**
+
 ```bash
 mkdir -p test_images/drift_scenarios/vqa/brightness/{dark,bright}
 
@@ -275,6 +289,7 @@ mkdir -p test_images/drift_scenarios/vqa/brightness/{dark,bright}
 ```
 
 **Complexity Drift:**
+
 ```bash
 mkdir -p test_images/drift_scenarios/vqa/complexity/{simple,complex,abstract}
 
@@ -295,6 +310,7 @@ mkdir -p test_images/drift_scenarios/vqa/complexity/{simple,complex,abstract}
 ```
 
 **Domain Drift:**
+
 ```bash
 mkdir -p test_images/drift_scenarios/vqa/domains/{medical,aerial,technical}
 
@@ -422,6 +438,7 @@ python test_api.py --service vqa \
 ```
 
 **Expected Results:**
+
 - Reference window fills (100 samples)
 - No drift detected (baseline establishment)
 - Metrics stabilize
@@ -438,6 +455,7 @@ python test_api.py --service yolo \
 ```
 
 **Expected Results:**
+
 - `evidently_brightness_drift_score` increases
 - `evidently_dataset_drift` may trigger (>30% features drifting)
 - Alert: `BrightnessDriftHigh`
@@ -454,6 +472,7 @@ python test_api.py --service yolo \
 ```
 
 **Expected Results:**
+
 - `evidently_detections_drift_score` increases
 - Average object count changes significantly
 - Possible confidence drift (crowded scenes harder to detect)
@@ -471,6 +490,7 @@ python test_api.py --service vqa \
 ```
 
 **Expected Results:**
+
 - `vqa_evidently_question_length_drift_score` may increase
 - Question type distribution shifts (all "how_many")
 - Answer length may change
@@ -487,6 +507,7 @@ python test_api.py --service yolo \
 ```
 
 **Expected Results:**
+
 - Multiple drift indicators trigger
 - Confidence drops significantly
 - Detection count changes
@@ -506,6 +527,7 @@ python test_api.py --service yolo \
 ```
 
 **Expected Results:**
+
 - New reference established
 - Drift scores decrease
 - System stabilizes
@@ -568,6 +590,7 @@ open http://localhost:3000
 ## Best Practices
 
 ### Image Quality
+
 - ✅ Use common formats (JPG, PNG)
 - ✅ Keep resolution consistent (640-1920px wide)
 - ✅ Ensure images are properly oriented
@@ -575,6 +598,7 @@ open http://localhost:3000
 - ❌ Don't mix different aspect ratios excessively
 
 ### Baseline Selection
+
 - ✅ Representative of production data
 - ✅ Balanced across categories
 - ✅ Good quality, clear subjects
@@ -582,6 +606,7 @@ open http://localhost:3000
 - ❌ Avoid test/drift images in baseline
 
 ### Drift Testing
+
 - ✅ Test one drift type at a time
 - ✅ Document image sources and characteristics
 - ✅ Keep drift images separate from baseline
@@ -590,6 +615,7 @@ open http://localhost:3000
 - ❌ Avoid testing with corrupted images
 
 ### Monitoring
+
 - ✅ Check Grafana dashboards during tests
 - ✅ Save JSON results for analysis
 - ✅ Reset reference between different test scenarios
@@ -599,13 +625,16 @@ open http://localhost:3000
 ## Troubleshooting
 
 ### "Not enough data for drift detection"
+
 **Solution:** Need 100 baseline + 50 current samples
+
 ```bash
 python test_api.py --service yolo --drift-status
 # Check reference_size and current_size
 ```
 
 ### Drift not detecting despite obvious differences
+
 **Solution:** May need more samples or stronger drift
 ```bash
 # Increase number of drift images
@@ -614,6 +643,7 @@ python test_api.py --service yolo --drift-status
 ```
 
 ### False positives (drift detected on similar images)
+
 **Solution:** Baseline may not be diverse enough
 ```bash
 # Add more variety to baseline
@@ -622,6 +652,7 @@ python test_api.py --service yolo --dir test_images/baseline --verbose
 ```
 
 ### Service errors or timeouts
+
 **Solution:** Check backend logs and resource usage
 ```bash
 cd backend

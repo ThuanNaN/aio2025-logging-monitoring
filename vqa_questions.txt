@@ -1,0 +1,30 @@
+# General questions (baseline)
+What is in this image?
+What objects can you see?
+Describe this image
+What is the main subject?
+
+# Counting questions (test numeric understanding)
+How many people are there?
+How many objects can you count?
+How many cars are visible?
+
+# Location questions
+Where is this photo taken?
+Where is the person located?
+What is in the background?
+
+# Identity questions
+What is this object?
+What type of animal is this?
+What color is the object?
+
+# Action questions
+What is the person doing?
+What is happening in this picture?
+What activity is shown?
+
+# Complex questions
+Why might this scene be unusual?
+What time of day is it?
+What is the relationship between the objects?

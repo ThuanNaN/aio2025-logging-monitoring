@@ -48,12 +48,33 @@ class MLAPITester:
             if response.status_code == 200:
                 health_data = response.json()
                 print(f"✅ {self.service.upper()} service is healthy")
+                
+                # Display model info if available in health response
+                model_info = None
                 if isinstance(health_data, dict):
                     if 'model' in health_data:
-                        print(f"   Model: {health_data.get('model', {}).get('name', 'N/A')}")
+                        model_info = health_data.get('model', {})
+                        # Try both 'name' (YOLO) and 'model_name' (VQA)
+                        model_name = model_info.get('name') or model_info.get('model_name', 'N/A')
+                        print(f"   Model: {model_name}")
+                        if model_info.get('device'):
+                            print(f"   Device: {model_info.get('device')}")
+                    
+                    # If no model info in health endpoint, fetch from model info endpoint
+                    if not model_info or model_info.get('name') == 'N/A':
+                        extra_info = self.get_model_info()
+                        if extra_info:
+                            model_name = extra_info.get('model_name', 'N/A')
+                            device = extra_info.get('device', 'N/A')
+                            print(f"   Model: {model_name}")
+                            print(f"   Device: {device}")
+                            if 'num_classes' in extra_info:
+                                print(f"   Classes: {extra_info.get('num_classes')}")
+                    
                     if 'drift_detector' in health_data:
                         dd = health_data['drift_detector']
                         print(f"   Drift Detector: {dd.get('reference_samples', 0)} ref, {dd.get('current_samples', 0)} current")
+                
                 return True
             else:
                 print(f"❌ {self.service.upper()} health check failed: {response.status_code}")
@@ -354,34 +375,33 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # YOLO - Check API health
+  # Check API health
   python test_api.py --service yolo --health
+  python test_api.py --service vqa --health
   
-  # YOLO - Submit a single image
+  # Submit single image
   python test_api.py --service yolo --image path/to/image.jpg
-  
-  # YOLO - Submit all images in a directory
-  python test_api.py --service yolo --dir path/to/images --delay 1.0
-  
-  # YOLO - Load test (submit same image 200 times)
-  python test_api.py --service yolo --image test.jpg --repeat 200 --delay 0.5
-  
-  # VQA - Submit with custom question
   python test_api.py --service vqa --image img.jpg --question "What is this?"
   
-  # VQA - Submit with random questions
-  python test_api.py --service vqa --dir images/ --delay 1.0
+  # Baseline establishment (100-300 images recommended)
+  python test_api.py --service yolo --dir images/baseline/yolo/indoor --delay 0.5
+  python test_api.py --service vqa --dir images/baseline/vqa/general --delay 0.5
   
-  # VQA - Multiple questions
-  python test_api.py --service vqa --image img.jpg --questions "What is this?" "Where is it?" "How many?"
+  # Drift testing
+  python test_api.py --service yolo --dir images/drift_scenarios/yolo/brightness/bright
+  python test_api.py --service vqa --dir images/drift_scenarios/vqa/complexity/complex
   
-  # Get drift status
+  # Load testing
+  python test_api.py --service yolo --dir images/load_test/identical --delay 0.1
+  python test_api.py --service yolo --image test.jpg --repeat 200 --delay 0.2
+  
+  # Drift monitoring
   python test_api.py --service yolo --drift-status
-  python test_api.py --service vqa --drift-status
-  
-  # Reset reference data
   python test_api.py --service yolo --reset-reference
-  python test_api.py --service vqa --reset-reference
+  
+  # Advanced options
+  python test_api.py --service vqa --dir images/ --questions "What is this?" "Where?" --verbose
+  python test_api.py --service yolo --dir images/ --check-drift 5 --output results.json
         """
     )
     
