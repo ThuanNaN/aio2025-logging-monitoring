@@ -103,7 +103,7 @@ async def answer_question(
             "question": question,
             "answer": result['answer'],
             "inference_time": result['inference_time'],
-            "model": result['model_name'],
+            "model_name": result['model_name'],
             "device": result['device'],
             "features": features,
             "evidently_drift": drift_result
