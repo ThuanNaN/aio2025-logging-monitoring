@@ -142,7 +142,8 @@ async def detect_objects(file: UploadFile = File(...)):
         # Detect drift using Evidently
         drift_result = evidently_detector.detect_drift()
         
-        # Update Prometheus metrics with Evidently results if drift was analyzed
+        # Update Prometheus metrics with Evidently results
+        # Always update metrics, even if insufficient data (will show 0 values)
         if drift_result.get('drift_share') is not None:
             EVIDENTLY_DATASET_DRIFT.set(1.0 if drift_result.get('dataset_drift', False) else 0.0)
             EVIDENTLY_DRIFT_SHARE.set(drift_result.get('drift_share', 0.0))
@@ -156,6 +157,10 @@ async def detect_objects(file: UploadFile = File(...)):
                 EVIDENTLY_CONFIDENCE_DRIFT_SCORE.set(feature_scores['avg_confidence'].get('drift_score', 0.0))
             if 'num_detections' in feature_scores:
                 EVIDENTLY_DETECTIONS_DRIFT_SCORE.set(feature_scores['num_detections'].get('drift_score', 0.0))
+        else:
+            # Insufficient data - ensure metrics show 0 (already initialized to 0)
+            # This helps Grafana display "collecting data" state properly
+            pass
         
         # Record inference latency
         INFERENCE_LATENCY.observe(time.time() - start)

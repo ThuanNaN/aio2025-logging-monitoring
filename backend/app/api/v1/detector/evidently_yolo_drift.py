@@ -17,8 +17,8 @@ class EvidentlyYOLODriftDetector:
     
     def __init__(
         self,
-        reference_window_size: int = 100,
-        detection_window_size: int = 50,
+        reference_window_size: int = 30,
+        detection_window_size: int = 20,
         drift_threshold: float = 0.5
     ):
         """
