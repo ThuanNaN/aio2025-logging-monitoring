@@ -206,23 +206,64 @@ class EvidentlyYOLODriftDetector:
         Returns:
             Dictionary with drift summary
         """
+        # Calculate current statistics
+        current_stats = {
+            'mean_brightness': 0.0,
+            'mean_detections': 0.0,
+            'mean_confidence': 0.0
+        }
+        
+        if len(self.current_data) > 0:
+            current_df = pd.DataFrame(self.current_data)
+            if 'brightness' in current_df.columns:
+                current_stats['mean_brightness'] = float(current_df['brightness'].mean())
+            if 'num_detections' in current_df.columns:
+                current_stats['mean_detections'] = float(current_df['num_detections'].mean())
+            if 'avg_confidence' in current_df.columns:
+                current_stats['mean_confidence'] = float(current_df['avg_confidence'].mean())
+        
+        # If no drift analysis yet, return status with stats
         if self.drift_report is None:
+            # Check if we have enough data
+            ref_size = len(self.reference_data)
+            curr_size = len(self.current_data)
+            
+            if ref_size < self.reference_window_size:
+                message = f'Building reference dataset: {ref_size}/{self.reference_window_size} samples'
+            elif curr_size < self.detection_window_size:
+                message = f'Collecting current data: {curr_size}/{self.detection_window_size} samples'
+            else:
+                message = 'Sufficient data available, waiting for drift check'
+            
             return {
-                'status': 'no_analysis',
-                'reference_samples': len(self.reference_data),
-                'current_samples': len(self.current_data),
-                'message': 'No drift analysis performed yet'
+                'status': 'insufficient_data',
+                'message': message,
+                'statistics': current_stats,
+                'drift_detection': {
+                    'dataset_drift': False,
+                    'drift_share': 0.0,
+                    'num_drifted_features': 0,
+                    'total_features': len(self.numeric_features),
+                    'reference_samples': ref_size,
+                    'current_samples': curr_size,
+                    'feature_drifts': {}
+                }
             }
         
+        # Return full drift summary with statistics
         return {
             'status': 'drift_detected' if self.drift_detected else 'no_drift',
-            'drift_detected': self.drift_detected,
-            'drift_share': self.drift_report.get('drift_share', 0.0),
-            'num_drifted_features': self.drift_report.get('num_drifted_features', 0),
-            'reference_samples': len(self.reference_data),
-            'current_samples': len(self.current_data),
-            'last_check': self.last_check_time.isoformat() if self.last_check_time else None,
-            'feature_drift_scores': self.drift_report.get('feature_drift_scores', {})
+            'statistics': current_stats,
+            'drift_detection': {
+                'dataset_drift': self.drift_detected,
+                'drift_share': self.drift_report.get('drift_share', 0.0),
+                'num_drifted_features': self.drift_report.get('num_drifted_features', 0),
+                'total_features': len(self.numeric_features),
+                'reference_samples': len(self.reference_data),
+                'current_samples': len(self.current_data),
+                'last_check': self.last_check_time.isoformat() if self.last_check_time else None,
+                'feature_drifts': self.drift_report.get('feature_drift_scores', {})
+            }
         }
     
     def get_data_quality_report(self) -> Dict[str, Any]:
