@@ -3,3 +3,4 @@
 *.pyc
 *.pt
 images/
+test_results/
