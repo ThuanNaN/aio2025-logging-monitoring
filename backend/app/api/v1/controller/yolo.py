@@ -99,7 +99,7 @@ class YOLOController:
                             'x1': bbox[0],
                             'y1': bbox[1],
                             'x2': bbox[2],
-                            'y3': bbox[3]
+                            'y2': bbox[3]
                         }
                     })
             
